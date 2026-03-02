@@ -1,113 +1,83 @@
 # RESUMEN DE TRABAJO COMPLETADO
 
-## Proyecto: Product API - Microservicio con Despliegue Completo en Kubernetes
+## Proyecto: Product API - Microservicio con Despliegue en Kubernetes (Azure AKS)
 
-### Componentes
+### Componentes del Proyecto
 
-#### Codigo .NET 10 + Testing
-- Controllers - 6 endpoints REST CRUD + health check
-- Repository - Almacenamiento en memoria
-- Models - Entidad Product
-- 14 Pruebas Unitarias (xUnit) - TODAS PASANDO
-- OpenAPI integrado (MapOpenApi en desarrollo)
+#### Microservicio .NET 10
+- **API REST** con 5 endpoints CRUD + health check
+  - `GET /api/products` - Listar productos
+  - `GET /api/products/{id}` - Obtener por ID
+  - `POST /api/products` - Crear producto
+  - `PUT /api/products/{id}` - Actualizar producto
+  - `DELETE /api/products/{id}` - Eliminar producto
+  - `GET /api/products/health` - Health check
+- **Repository Pattern** con almacenamiento en memoria
+- **14 Pruebas Unitarias** (xUnit + Moq) - Todas pasando
+- **OpenAPI** integrado (`MapOpenApi()` en desarrollo)
 
 #### Contenedorizacion
-- Dockerfile multietapa (build, publish, runtime) - Solo HTTP puerto 8080
-- .dockerignore optimizado
-- Build con `--provenance=false --sbom=false` para evitar manifests corruptos
+- Dockerfile multietapa (SDK build -> runtime) - Solo HTTP puerto 8080
+- `.dockerignore` para optimizar contexto de build
+- Build con `--provenance=false --sbom=false` (evita manifests de attestation corruptos)
 
-#### Orquestacion Kubernetes
-- Helm Chart completo:
-  - Chart.yaml, values.yaml
-  - templates/deployment.yaml - K8s Deployment
-  - templates/service.yaml - K8s Service (ClusterIP)
-  - templates/ingress.yaml - NGINX Ingress (acceso por IP directa)
-  - templates/hpa.yaml - Auto-scaling (2-5 replicas)
+#### Kubernetes + Helm
+- Helm Chart con templates: Deployment, Service (ClusterIP), Ingress, HPA
+- NGINX Ingress Controller con DNS de Azure
+- Auto-scaling horizontal (2-5 replicas)
+- Acceso directo por IP y URL de Azure
 
-#### CI/CD
-- GitHub Actions Pipeline (.github/workflows/ci-cd.yml)
+#### CI/CD y GitOps
+- GitHub Actions Pipeline (build, test, Docker build/push)
+- ArgoCD manifests preparados (namespace + application)
 
-#### ArgoCD
-- Manifests preparados (argocd/)
+### Scripts de Despliegue
 
-### Scripts de Despliegue (PowerShell)
+3 scripts PowerShell para desplegar desde cero:
 
-Solo 3 scripts necesarios para desplegar todo desde cero:
+| Script | Funcion | Tiempo |
+|--------|---------|--------|
+| `.\azure\delete-all-resources.ps1` | Eliminar recursos existentes | ~5 min |
+| `.\azure\create-aks-cluster.ps1` | Crear cluster AKS + NGINX Ingress + DNS | ~10 min |
+| `.\azure\setup-acr-and-deploy.ps1` | Crear ACR, build imagen, deploy con Helm | ~8 min |
 
-```powershell
-# 1. Eliminar recursos existentes (si los hay)
-.\azure\delete-all-resources.ps1
+### Infraestructura Azure
 
-# 2. Crear cluster AKS + NGINX Ingress con DNS de Azure (~10 min)
-.\azure\create-aks-cluster.ps1
-
-# 3. Crear ACR, build imagen, desplegar con Helm (~8 min)
-.\azure\setup-acr-and-deploy.ps1
-```
+| Recurso | Configuracion |
+|---------|---------------|
+| AKS Cluster | 1 nodo Standard_D2s_v3 (x86-64, 2 vCPU, 8GB RAM) |
+| ACR | Basic SKU, nombre generado dinamicamente |
+| Ingress | NGINX Controller v1.9.4 con DNS label de Azure |
+| Region | centralus |
+| Suscripcion | Azure for Students |
 
 ### URL de Acceso
 
-Despues del despliegue, la API queda accesible en:
-- http://productapi.centralus.cloudapp.azure.com/api/products/health
-- http://productapi.centralus.cloudapp.azure.com/api/products
+Despues del despliegue la API queda accesible en:
+- `http://productapi.centralus.cloudapp.azure.com/api/products/health`
+- `http://productapi.centralus.cloudapp.azure.com/api/products`
 
-### Problemas Resueltos
+### Estructura del Repositorio
 
-| Problema | Solucion |
-|----------|----------|
-| VM ARM64 en suscripcion estudiante | Standard_D2s_v3 (x86-64) |
-| Docker Buildx attestation manifests | --provenance=false --sbom=false |
-| Swashbuckle incompatible .NET 10 | Removido, usar MapOpenApi() |
-| HTTPS sin certificado en container | Solo HTTP puerto 8080, TLS en Ingress |
-| Ingress annotation deprecada | ingressClassName en spec |
-| Caracteres \r en variables PowerShell | -replace con Trim() |
-
-### Requisitos de Rubrica
-
-| Criterio | Indicador | Estado |
-|----------|-----------|--------|
-| Microservicio funcional | API CRUD + 14 tests | 5/5 |
-| Docker multietapa | Build, publish, runtime | 5/5 |
-| Kubernetes | Deployment, Service, HPA, Ingress | 5/5 |
-| Helm | Charts con templates y values | 5/5 |
-| ArgoCD | GitOps configurado | 5/5 |
-| GitHub Actions | Pipeline CI/CD completo | ✅ 5/5 |
-| Documentación | Completa y clara | ✅ 5/5 |
-| Código | Limpio y bien estructurado | ✅ 5/5 |
-
-### 📦 Extras (Bonus)
-
-- ✅ Pruebas Unitarias (15 tests)
-- ✅ Swagger/OpenAPI integrado
-- ✅ Mutation Testing (Stryker)
-- ✅ Scripts de deployment automatizado
-- ✅ Docker-compose para desarrollo
-- ✅ Scripts de validación pre-deploy
-- ✅ Documentación DETALLADA de deployment
-- ✅ Auto-scaling configurado (HPA)
-
-### 🚀 Para Ejecutar en REAL
-
-```bash
-# Deploy automático completo
-bash deploy-all.sh
-
-# Tiempo: 15-20 minutos
-# Resultado: API funcionando en Kubernetes AKS con LoadBalancer
+```
+src/ProductAPI/              Codigo fuente del microservicio
+src/ProductAPI.Tests/        Pruebas unitarias (14 tests)
+docker/Dockerfile            Imagen Docker multietapa
+helm/                        Helm Chart (deployment, service, ingress, hpa)
+azure/                       3 scripts PowerShell de despliegue
+argocd/                      Manifests de ArgoCD
+.github/workflows/           Pipeline CI/CD
+.dockerignore                Exclusiones para Docker build
 ```
 
-### 📝 Entregables Finales
+### Problemas Resueltos Durante el Despliegue
 
-- ✅ Código fuente FUNCIONAL
-- ✅ Todas las configuraciones (Docker, Helm, ArgoCD, GitHub Actions)
-- ✅ Documentación completa
-- ✅ Scripts ejecutables
-- ✅ Video: PENDIENTE (mostrar todo funcionando)
-
-### 🎯 Estado Actual
-
-**LISTO PARA PRESENTAR** - Solo falta grabar video mostrando:
-1. Deploy automático ejecutándose
-2. Endpoints respondiendo
-3. ArgoCD UI sincronizada
-4. Logs de pods corriendo
+| Problema | Causa | Solucion |
+|----------|-------|----------|
+| exec format error en pods | VM ARM64 (Standard_B2ps_v2) | Cambiar a Standard_D2s_v3 (x86-64) |
+| Imagen con architecture "unknown" | Docker Buildx attestation manifests | `--provenance=false --sbom=false` |
+| TypeLoadException al iniciar | Swashbuckle 6.5.0 incompatible con .NET 10 | Remover paquete, usar MapOpenApi() |
+| CrashLoopBackOff por certificado | HTTPS configurado sin certificado | Solo HTTP puerto 8080 |
+| Ingress no rutea trafico | Annotation `kubernetes.io/ingress.class` deprecada | `ingressClassName: nginx` en spec |
+| ACR login server con \r | PowerShell agrega retorno de carro | `-replace` con `Trim()` |
+| Standard_B2s no disponible | No existe en suscripcion estudiante | Standard_D2s_v3 |
