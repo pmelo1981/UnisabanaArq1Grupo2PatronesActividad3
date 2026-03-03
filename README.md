@@ -1,329 +1,280 @@
-# UnisabanaArq1Grupo2PatronesActividad3
+# Product API - Microservicio REST
 
-## Presentacion de la Actividad
+API REST para gestión de productos con despliegue automatizado en Kubernetes/AKS, Helm, ArgoCD y CI/CD.
 
-Asignatura: Arquitectura de Software
-Profesor: Daniel Orlando Saavedra Fonnegra
+## 🚀 Tecnologías
 
-Integrantes del grupo:
+- **.NET 10** - Framework
+- **Docker** - Containerización (multietapa)
+- **Kubernetes/AKS** - Orquestación
+- **Helm 3** - Gestión de configuración
+- **NGINX Ingress Controller** - Enrutamiento HTTP(S)
+- **ArgoCD** - GitOps automático
+- **GitHub Actions** - CI/CD
+- **Azure Container Registry** - Registry de imágenes
 
-- Pablo Andres Melo Garcia
-- Camilo Andres Padilla Garcia
-- Edison Kenneth Campos Avila
-- Cristian Alonso Cardona Vega
-- Jorge Andres Ayala Valero
-- John Harold Diaz Gonzalez
-
-## Demo: Microservicio con Despliegue en Kubernetes (Azure AKS)
-
-Este proyecto implementa un microservicio REST API en .NET 10 con despliegue completo en Kubernetes usando Azure AKS. Incluye:
-
-- **Microservicio**: API REST CRUD de productos con health check
-- **Docker**: Imagen multietapa optimizada para produccion
-- **Kubernetes**: Orquestacion con Helm Charts (Deployment, Service, Ingress, HPA)
-- **CI/CD**: Pipeline automatizado con GitHub Actions
-- **GitOps**: Configuracion de ArgoCD para sincronizacion automatica
-- **Infraestructura**: Scripts de despliegue automatizado en Azure AKS
-
-### Diagrama de Arquitectura de Infraestructura
-
-```mermaid
-graph TD
-    User["Usuario / Navegador"]
-    DNS["productapi.centralus.cloudapp.azure.com"]
-    DNS_ARGO["productapi-argocd.centralus.cloudapp.azure.com"]
-    LB["Azure Load Balancer"]
-    NGINX["NGINX Ingress Controller"]
-    SVC["Service ClusterIP :80"]
-    POD1["Pod ProductAPI :8080"]
-    POD2["Pod ProductAPI :8080"]
-    HPA["HPA 2-5 replicas"]
-    ACR["Azure Container Registry"]
-    ARGO["ArgoCD"]
-    GIT["GitHub Repository"]
-
-    User -->|HTTP| DNS
-    User -->|HTTPS| DNS_ARGO
-    DNS --> LB
-    DNS_ARGO --> ARGO
-    LB --> NGINX
-
-    subgraph AKS_Cluster["AKS Cluster (Standard_D2s_v3)"]
-        NGINX -->|Ingress rules| SVC
-        SVC --> POD1
-        SVC --> POD2
-        HPA -.->|escala| SVC
-        ARGO -.->|sincroniza| SVC
-    end
-
-    ACR -.->|pull imagen| POD1
-    ACR -.->|pull imagen| POD2
-    GIT -.->|GitOps| ARGO
-```
-
-### Diagrama de Flujo de Despliegue
-
-```mermaid
-sequenceDiagram
-    participant Dev as Desarrollador
-    participant PS1 as create-aks-cluster.ps1
-    participant PS2 as setup-acr-and-deploy.ps1
-    participant Azure as Azure
-    participant AKS as AKS Cluster
-    participant ACR as Container Registry
-
-    Dev->>PS1: Ejecutar script 1
-    PS1->>Azure: az group create
-    PS1->>Azure: az aks create
-    Azure-->>PS1: Cluster listo
-    PS1->>AKS: kubectl apply NGINX Ingress
-    PS1->>AKS: Asignar DNS label
-    AKS-->>PS1: Ingress Controller listo
-
-    Dev->>PS2: Ejecutar script 2
-    PS2->>Azure: az acr create
-    PS2->>ACR: docker buildx build + push
-    ACR-->>PS2: Imagen subida
-    PS2->>AKS: helm upgrade --install
-    AKS-->>PS2: 2 pods Running
-    PS2-->>Dev: URL de acceso
-```
-
-### Diagrama de Arquitectura del Microservicio
-
-```mermaid
-classDiagram
-    class ProductsController {
-        -ProductRepository _repository
-        +GetAll() ActionResult
-        +GetById(id) ActionResult
-        +Create(product) ActionResult
-        +Update(id, product) ActionResult
-        +Delete(id) ActionResult
-    }
-    class ProductRepository {
-        -ConcurrentDictionary products
-        +GetAllAsync() Task
-        +GetByIdAsync(id) Task
-        +AddAsync(product) Task
-        +UpdateAsync(id, product) Task
-        +DeleteAsync(id) Task
-    }
-    class Product {
-        +int Id
-        +string Name
-        +string Description
-        +decimal Price
-        +int Stock
-        +DateTime CreatedAt
-        +DateTime UpdatedAt
-    }
-    ProductsController --> ProductRepository : usa
-    ProductRepository --> Product : gestiona
-```
-
-### Diagrama de Pipeline CI/CD
-
-```mermaid
-graph LR
-    Push["git push main"]
-    Build["Build .NET 10"]
-    Test["Ejecutar 14 Tests"]
-    Docker["Build Docker Image"]
-    Registry["Push a Registry"]
-    ArgoCD["ArgoCD Sync"]
-    Deploy["Deploy a AKS"]
-
-    Push --> Build
-    Build --> Test
-    Test -->|Pass| Docker
-    Docker --> Registry
-    Registry --> ArgoCD
-    ArgoCD --> Deploy
-
-    Test -->|Fail| Fail["Pipeline detenido"]
-```
-
-### Estructura del Repositorio
+## 📡 API REST
 
 ```
-src/
-  ProductAPI/                  Codigo fuente del microservicio
-    Controllers/               ProductsController (5 endpoints + health)
-    Models/                    Entidad Product
-    Repositories/              ProductRepository (in-memory)
-    Program.cs                 Configuracion de la aplicacion
-  ProductAPI.Tests/            14 pruebas unitarias (xUnit + Moq)
-docker/
-  Dockerfile                   Imagen multietapa (SDK build -> runtime)
-helm/
-  Chart.yaml                   Metadata del chart
-  values.yaml                  Valores por defecto
-  templates/
-    deployment.yaml            Kubernetes Deployment
-    service.yaml               Kubernetes Service (ClusterIP)
-    ingress.yaml               NGINX Ingress (acceso por IP)
-    hpa.yaml                   Horizontal Pod Autoscaler (2-5 replicas)
-azure/
-  create-aks-cluster.ps1       Crear cluster AKS + NGINX Ingress + DNS
-  setup-acr-and-deploy.ps1     Crear ACR, build imagen, deploy con Helm
-  delete-all-resources.ps1     Eliminar todos los recursos
-argocd/
-  namespace.yaml               Namespace de ArgoCD
-  application.yaml             Application manifest
-.github/workflows/
-  ci-cd.yml                    Pipeline CI/CD (build, test, Docker, deploy)
+GET    /api/products              # Obtener todos
+GET    /api/products/{id}         # Obtener por ID
+POST   /api/products              # Crear
+PUT    /api/products/{id}         # Actualizar
+DELETE /api/products/{id}         # Eliminar
+GET    /api/products/health       # Health check
 ```
 
-### Despliegue en Azure AKS
+## 📚 Documentación
 
-#### Requisitos previos
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) - Arquitectura y patrones
+- [GETTING_STARTED.md](docs/GETTING_STARTED.md) - Inicio local
+- [TESTING.md](docs/TESTING.md) - Pruebas unitarias y Swagger
+- [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) - Paso a paso manual
+- [azure/README.md](azure/README.md) - Información de Azure
 
-- Azure CLI (`az login` autenticado)
-- Docker Desktop
-- kubectl
-- Helm 3
+---
 
-#### Ejecucion
+## 🚀 DEPLOYMENT RÁPIDO (5 pasos)
 
-Abrir PowerShell en la raiz del proyecto y ejecutar en orden:
-
+### Prerequisitos
 ```powershell
-# 1. Eliminar recursos existentes (si los hay)
-.\azure\delete-all-resources.ps1
+# Verificar que tengas esto
+az account show              # Autenticado en Azure
+docker --version             # Docker instalado
+kubectl version --client     # kubectl instalado
+helm version                 # Helm 3 instalado
+```
 
-# 2. Crear cluster AKS + NGINX Ingress con DNS de Azure (~10 min)
+### Paso 1: Crear Cluster AKS
+```powershell
 .\azure\create-aks-cluster.ps1
+```
+**Qué hace:**
+- ✅ Crea Resource Group
+- ✅ Crea cluster AKS (2 nodos Standard_B2s)
+- ✅ Instala NGINX Ingress Controller
+- ✅ Espera LoadBalancer IP
+- ⏱️ Tiempo: 5-10 minutos
 
-# 3. Crear ACR, build imagen, desplegar con Helm (~8 min)
+### Paso 2: Setup ACR y Deploy
+```powershell
 .\azure\setup-acr-and-deploy.ps1
 ```
+**Qué hace:**
+- ✅ Crea Azure Container Registry
+- ✅ Build imagen Docker
+- ✅ Push a ACR
+- ✅ Genera helm/values-acr.yaml
+- ✅ Deploy con Helm
+- ⏱️ Tiempo: 3-5 minutos
 
-Al finalizar, la API queda accesible en:
-
+### Paso 3: Instalar ArgoCD
+```powershell
+.\azure\setup-argocd.ps1
 ```
-http://productapi.centralus.cloudapp.azure.com/api/products/health
-http://productapi.centralus.cloudapp.azure.com/api/products
+**Qué hace:**
+- ✅ Crea namespace argocd
+- ✅ Instala ArgoCD oficial
+- ✅ Espera LoadBalancer IP
+- ✅ Aplica application manifest
+- ✅ Muestra credenciales
+- ⏱️ Tiempo: 2-3 minutos
+
+### Paso 4: Verificar Deployment
+```powershell
+.\azure\verify-deploy.ps1
 ```
+**Qué hace:**
+- ✅ Verifica pods Running
+- ✅ Verifica HPA activo
+- ✅ Verifica LoadBalancer IP
+- ✅ Verifica health endpoint
+- ✅ Verifica ArgoCD Application
 
-### Acceso a ArgoCD (GitOps Dashboard)
-
-ArgoCD esta instalado en el cluster y expuesto publicamente:
-
-| | |
-|---|---|
-| **URL** | `https://productapi-argocd.centralus.cloudapp.azure.com` |
-| **Usuario** | `admin` |
-| **Password** | Obtener con: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" \| base64 -d` |
-
-ArgoCD sincroniza automaticamente los cambios del repositorio Git al cluster (auto-sync + self-heal).
-
-### CI/CD Verificado
-
-| Componente | Estado | Detalle |
-|------------|--------|---------|
-| GitHub Actions | ✅ Funcionando | Build, test (14/14), Docker build/push |
-| ArgoCD | ✅ Synced + Healthy | Sincronizacion automatica desde Git |
-| Pruebas Unitarias | ✅ 14/14 pasando | xUnit + Moq |
-
-### Endpoints de la API
-
-| Metodo | Endpoint | Descripcion |
-|--------|----------|-------------|
-| GET | `/api/products` | Listar todos los productos |
-| GET | `/api/products/{id}` | Obtener producto por ID |
-| POST | `/api/products` | Crear nuevo producto |
-| PUT | `/api/products/{id}` | Actualizar producto |
-| DELETE | `/api/products/{id}` | Eliminar producto |
-| GET | `/api/products/health` | Health check |
-
-### Prueba de endpoints
-
-```bash
-# Health check
-curl http://productapi.centralus.cloudapp.azure.com/api/products/health
-
-# Listar productos
-curl http://productapi.centralus.cloudapp.azure.com/api/products
-
-# Crear producto
-curl -X POST http://productapi.centralus.cloudapp.azure.com/api/products \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Mouse","description":"Mouse inalambrico","price":29.99,"stock":50}'
-
-# Obtener por ID
-curl http://productapi.centralus.cloudapp.azure.com/api/products/1
-
-# Actualizar
-curl -X PUT http://productapi.centralus.cloudapp.azure.com/api/products/1 \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Mouse Pro","description":"Mouse gaming","price":49.99,"stock":30}'
-
-# Eliminar
-curl -X DELETE http://productapi.centralus.cloudapp.azure.com/api/products/1
+### Paso 5: LIMPIAR (¡Importante!)
+```powershell
+az group delete --name productapi-rg --yes
 ```
+⚠️ **Esto elimina TODO y detiene costos**
 
-Ejemplo de respuesta del health check:
+---
 
-```json
-{
-  "status": "healthy",
-  "timestamp": "2026-03-01T22:43:00.271Z"
-}
-```
-
-Ejemplo de respuesta de productos:
-
-```json
-[
-  {
-    "id": 1,
-    "name": "Laptop",
-    "description": "Laptop de alto rendimiento",
-    "price": 1299.99,
-    "stock": 10,
-    "createdAt": "2026-03-01T22:24:24.979Z",
-    "updatedAt": "2026-03-01T22:24:24.979Z"
-  }
-]
-```
-
-### Que demuestra este proyecto
-
-- **Microservicio funcional**: API REST CRUD completa con pruebas unitarias
-- **Contenedorizacion**: Docker multietapa optimizado para produccion
-- **Orquestacion**: Kubernetes con Helm Charts configurables y auto-scaling
-- **Ingress**: NGINX como punto de entrada unico con DNS de Azure
-- **CI/CD**: Pipeline automatizado con GitHub Actions - ✅ Verificado
-- **GitOps**: ArgoCD sincronizando automaticamente desde Git - ✅ Synced + Healthy
-- **Infraestructura como codigo**: Scripts reproducibles para crear y destruir el entorno completo
-
-### Eliminar recursos (evitar costos)
+## 🔐 Acceder a ArgoCD UI
 
 ```powershell
-.\azure\delete-all-resources.ps1
+# Terminal 1: Port-forward
+kubectl port-forward svc/argocd-server -n argocd 8443:443
+
+# Terminal 2: Obtener password
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+# Navegador: https://localhost:8443
+# Usuario: admin
+# Contraseña: (output anterior)
 ```
 
-### Tecnologias utilizadas
+---
 
-| Tecnologia | Version / Detalle |
-|------------|-------------------|
-| .NET | 10.0 |
-| ASP.NET Core | Minimal API + Controllers |
-| Docker | Buildx, multietapa |
-| Kubernetes | AKS v1.33 |
-| Helm | 3.x |
-| NGINX Ingress | Controller v1.9.4 |
-| Azure | AKS + ACR (suscripcion estudiante) |
-| GitHub Actions | CI/CD Pipeline |
-| ArgoCD | GitOps |
-| xUnit + Moq | 14 pruebas unitarias |
+## ✅ Probar Endpoints
 
-### Bibliografia
+```powershell
+# Health check
+curl http://<EXTERNAL-IP>/api/products/health
 
-- [Microsoft Docs: Azure Kubernetes Service](https://learn.microsoft.com/en-us/azure/aks/)
-- [Kubernetes Documentation](https://kubernetes.io/docs/)
-- [Helm Documentation](https://helm.sh/docs/)
-- [NGINX Ingress Controller](https://kubernetes.github.io/ingress-nginx/)
-- [ArgoCD Documentation](https://argo-cd.readthedocs.io/)
-- [Docker Multi-stage Builds](https://docs.docker.com/build/building/multi-stage/)
+# Obtener todos
+curl http://<EXTERNAL-IP>/api/products
+
+# Crear producto
+curl -X POST http://<EXTERNAL-IP>/api/products `
+  -H "Content-Type: application/json" `
+  -d '{"name":"Laptop","description":"High-end laptop","price":999.99,"stock":5}'
+```
+
+---
+
+## 🔍 Debugging
+
+```powershell
+# Ver pods
+kubectl get pods -n productapi -o wide
+
+# Ver logs
+kubectl logs -n productapi -l app=productapi -f
+
+# Ver eventos
+kubectl get events -n productapi --sort-by='.lastTimestamp'
+
+# Ver HPA
+kubectl get hpa -n productapi
+
+# Ver todos los recursos
+kubectl get all -n productapi
+```
+
+---
+
+## 📊 Flujo GitOps
+
+```
+1. Push a GitHub (main branch)
+        ↓
+2. GitHub Actions
+   - Build .NET
+   - Tests
+   - Build Docker image
+   - Push a ACR
+        ↓
+3. ArgoCD (monitorea repo)
+   - Detecta cambios
+   - Sincroniza manifests
+        ↓
+4. Kubernetes
+   - Aplica new deployment
+   - Escala pods (HPA)
+   - Actualiza servicios
+```
+
+---
+
+## ⚙️ Estructura de Scripts
+
+| Script | Propósito | Idempotente |
+|--------|-----------|------------|
+| `create-aks-cluster.ps1` | Crear AKS + NGINX Ingress | ✅ Sí |
+| `setup-acr-and-deploy.ps1` | ACR + Docker Build + Helm Deploy | ✅ Sí |
+| `setup-argocd.ps1` | Instalar ArgoCD + Application | ✅ Sí |
+| `verify-deploy.ps1` | Verificar estado completo | ✅ Solo lectura |
+| `delete-all-resources.ps1` | Limpiar Resource Group | ⚠️ Cuidado |
+
+---
+
+## 💾 Archivos Versionados (NO excluidos del repo)
+
+```
+✅ helm/                    # Charts y valores
+✅ argocd/                  # Manifests de ArgoCD
+✅ azure/                   # Scripts de deployment
+✅ .github/workflows/       # CI/CD pipelines
+✅ docker/                  # Dockerfile
+```
+
+**Nota:** `.dockerignore` excluye estos archivos del contexto Docker (intencional), pero están versionados en Git.
+
+---
+
+## 📋 Checklist de Deployment
+
+- [ ] ✅ `az account show` funciona
+- [ ] ✅ Ejecute `create-aks-cluster.ps1`
+- [ ] ✅ Ejecute `setup-acr-and-deploy.ps1`
+- [ ] ✅ Ejecute `setup-argocd.ps1`
+- [ ] ✅ Ejecute `verify-deploy.ps1` (todo verde)
+- [ ] ✅ Pruebe endpoints con curl
+- [ ] ✅ Acceda a ArgoCD UI
+- [ ] ✅ Ejecute `az group delete` para limpiar
+
+---
+
+## 💰 Costos Estimados
+
+| Recurso | Costo |
+|---------|-------|
+| 2 x Standard_B2s (nodos AKS) | $30-50/mes |
+| Load Balancer (x2) | ~$32/mes |
+| Container Registry (Basic) | ~$5/mes |
+| **TOTAL** | **~$70-85/mes** |
+
+⏱️ **Durante pruebas (20 min):** ~$0.50
+
+---
+
+## 🆘 Troubleshooting
+
+### LoadBalancer IP no aparece
+```powershell
+# Puede tomar 2-3 minutos
+kubectl get svc -n productapi -w
+```
+
+### Pods no están Running
+```powershell
+# Ver logs
+kubectl logs -n productapi -l app=productapi
+
+# Describir pod
+kubectl describe pod -n productapi <pod-name>
+```
+
+### ArgoCD no sincroniza
+```powershell
+# Ver Application status
+kubectl get application -n argocd productapi
+
+# Ver controller logs
+kubectl logs -n argocd deployment/argocd-application-controller
+```
+
+### Limpiar antes de re-ejecutar
+```powershell
+# Si algo falla, limpiar todo
+az group delete --name productapi-rg --yes
+
+# Esperar ~10 minutos
+# Luego re-ejecutar desde Paso 1
+```
+
+---
+
+## 📝 Licencia
+
+MIT
+
+---
+
+## 🎯 Próximos Pasos
+
+1. ✅ Código .NET completo y testeado
+2. ✅ Scripts de deployment automatizados e idempotentes
+3. ⏭️ Ejecutar los 5 pasos de deployment
+4. ⏭️ Grabar video demostrando todo funcionando
+5. ⏭️ Presentar proyecto
