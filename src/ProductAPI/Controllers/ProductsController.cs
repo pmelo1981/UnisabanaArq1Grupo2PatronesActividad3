@@ -25,6 +25,7 @@ public class ProductsController : ControllerBase
     [HttpGet("stats")]
     public async Task<ActionResult<object>> GetStats()
     {
+        // Returns statistics: total count, average price, max and min prices
         var products = (await _repository.GetAllAsync()).ToList();
         if (!products.Any())
             return Ok(new { total = 0, promedio = 0, maximo = 0, minimo = 0 });
