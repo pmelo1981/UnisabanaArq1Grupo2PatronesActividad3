@@ -20,10 +20,10 @@ Se refactorizaron todos los scripts de Azure para cumplir con los requisitos de 
 **Parámetros:**
 ```powershell
 .\azure\create-aks-cluster.ps1 `
-  -ResourceGroup "productapi-rg" `
-  -ClusterName "productapi-aks" `
-  -Location "eastus" `
-  -NodeCount 2 `
+  -ResourceGroup "productapi-rg-enterprise" `
+  -ClusterName "productapi-aks-mpn" `
+  -Location "centralus" `
+  -NodeCount 1 `
   -VmSize "Standard_B2s"
 ```
 
@@ -46,8 +46,8 @@ Se refactorizaron todos los scripts de Azure para cumplir con los requisitos de 
 **Parámetros:**
 ```powershell
 .\azure\setup-acr-and-deploy.ps1 `
-  -ResourceGroup "productapi-rg" `
-  -RegistryName "productapi123" `
+  -ResourceGroup "productapi-rg-enterprise" `
+  -RegistryName "productapiacrmpn" `
   -ImageTag "latest"
 ```
 
@@ -159,7 +159,7 @@ Se refactorizaron todos los scripts de Azure para cumplir con los requisitos de 
 .\azure\verify-deploy.ps1
 
 # 5. Limpiar cuando termines
-az group delete --name productapi-rg --yes
+az group delete --name productapi-rg-enterprise --yes
 ```
 
 **Tiempo total:** ~15-20 minutos

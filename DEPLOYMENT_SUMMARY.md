@@ -3,8 +3,8 @@
 **Status**: ✅ **DEPLOYMENT COMPLETO Y FUNCIONAL**
 
 **Fecha**: 2 de Marzo 2026  
-**Suscripción**: Azure for Students (pablomega@unisabana.edu.co)  
-**Cluster**: AKS East US (1 nodo Standard_B2s)
+**Suscripción**: Visual Studio Enterprise - MPN (347b668a-8017-473a-91d4-4157235aa2a3)  
+**Cluster**: productapi-aks-mpn (centralus, 1 nodo Standard_B2s)
 
 ---
 
@@ -13,10 +13,10 @@
 | Componente | Status | Detalles |
 |------------|--------|----------|
 | **Microservicio .NET 10** | ✅ | ProductAPI - 6 endpoints CRUD + health |
-| **Docker** | ✅ | Imagen multistage en ACR `productapiregistry163505.azurecr.io/productapi:latest` |
+| **Docker** | ✅ | Imagen multistage en ACR `productapiacrmpn.azurecr.io/productapi:latest` |
 | **Kubernetes** | ✅ | AKS 1 nodo, 2 pods running, deployment ready |
 | **HPA** | ✅ | Horizontal Pod Autoscaler (2-5 replicas, 80% CPU) |
-| **NGINX Ingress** | ✅ | LoadBalancer IP: `20.84.230.209` |
+| **NGINX Ingress** | ✅ | LoadBalancer IP: `172.168.96.52` |
 | **Helm** | ✅ | Release "productapi" v3 con values-acr.yaml |
 | **ArgoCD** | ✅ | Instalado, Application sincronizada, AutoSync activo |
 | **Tests** | ✅ | 15 tests xUnit (100% passing) |
@@ -28,26 +28,26 @@
 
 ### **API REST Microservicio**
 ```
-Base URL: http://20.84.230.209
+Base URL: http://productapi-mpn.centralus.cloudapp.azure.com
 Endpoints:
-  GET    http://20.84.230.209/api/products
-  GET    http://20.84.230.209/api/products/{id}
-  POST   http://20.84.230.209/api/products
-  PUT    http://20.84.230.209/api/products/{id}
-  DELETE http://20.84.230.209/api/products/{id}
-  GET    http://20.84.230.209/api/products/health
+  GET    http://productapi-mpn.centralus.cloudapp.azure.com/api/products
+  GET    http://productapi-mpn.centralus.cloudapp.azure.com/api/products/{id}
+  POST   http://productapi-mpn.centralus.cloudapp.azure.com/api/products
+  PUT    http://productapi-mpn.centralus.cloudapp.azure.com/api/products/{id}
+  DELETE http://productapi-mpn.centralus.cloudapp.azure.com/api/products/{id}
+  GET    http://productapi-mpn.centralus.cloudapp.azure.com/api/products/health
 ```
 
 ### **Swagger UI**
 ```
-URL: http://20.84.230.209/swagger
+URL: http://productapi-mpn.centralus.cloudapp.azure.com/swagger
 ```
 
 ### **ArgoCD (si LoadBalancer IP disponible)**
 ```
-URL: https://<ArgoCD-IP> (pendiente - cuota Azure agotada)
+URL: https://172.169.162.125
 Usuario: admin
-Password: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+Password: im43l6M5zfRwkBcY
 ```
 
 ---
@@ -66,7 +66,7 @@ Ejecutar script de verificación:
 ✅ Pods están Running (2)
 ✅ HPA configurado correctamente (2-5)
 ✅ Service configurado (ClusterIP)
-✅ Ingress NGINX asignada (20.84.230.209)
+✅ Ingress NGINX asignada (172.168.96.52)
 ✅ Application sincronizada (Synced)
 ✅ VERIFICACIÓN COMPLETADA
 ```
@@ -202,7 +202,7 @@ Workspace/
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  ┌─ Ingress Controller (NGINX) ◄─── LoadBalancer IP         │
-│  │   20.84.230.209                                           │
+│  │   172.168.96.52                                           │
 │  │                                                            │
 │  └─► Ingress (productapi-productapi)                        │
 │       └─► Service ClusterIP (productapi-productapi:80)      │
@@ -235,8 +235,7 @@ Workspace/
 
 ### **Con PowerShell**
 ```powershell
-# Test health endpoint
-$response = Invoke-WebRequest -Uri "http://20.84.230.209/api/products/health" -UseBasicParsing
+$response = Invoke-WebRequest -Uri "http://productapi-mpn.centralus.cloudapp.azure.com/api/products/health" -UseBasicParsing
 $response.StatusCode  # Expect: 200
 
 # Get all products
@@ -248,26 +247,26 @@ $products  # Expect: array de productos
 ### **Con curl**
 ```bash
 # Health check
-curl -i http://20.84.230.209/api/products/health
+curl -i http://productapi-mpn.centralus.cloudapp.azure.com/api/products/health
 
 # Get products
-curl http://20.84.230.209/api/products | jq
+curl http://productapi-mpn.centralus.cloudapp.azure.com/api/products | jq
 
 # Create product
-curl -X POST http://20.84.230.209/api/products \
+curl -X POST http://productapi-mpn.centralus.cloudapp.azure.com/api/products \
   -H "Content-Type: application/json" \
   -d '{"name":"Laptop","price":999.99}'
 
 # Get by ID
-curl http://20.84.230.209/api/products/1
+curl http://productapi-mpn.centralus.cloudapp.azure.com/api/products/1
 
 # Update
-curl -X PUT http://20.84.230.209/api/products/1 \
+curl -X PUT http://productapi-mpn.centralus.cloudapp.azure.com/api/products/1 \
   -H "Content-Type: application/json" \
   -d '{"name":"Gaming Laptop","price":1299.99}'
 
 # Delete
-curl -X DELETE http://20.84.230.209/api/products/1
+curl -X DELETE http://productapi-mpn.centralus.cloudapp.azure.com/api/products/1
 ```
 
 ---
@@ -275,9 +274,9 @@ curl -X DELETE http://20.84.230.209/api/products/1
 ## 🔧 CONFIGURACIÓN ACTUAL
 
 ### **AKS Cluster**
-- **Nombre**: productapi-aks
-- **Resource Group**: productapi-rg
-- **Región**: East US
+- **Nombre**: productapi-aks-mpn
+- **Resource Group**: productapi-rg-enterprise
+- **Región**: centralus
 - **Nodos**: 1 x Standard_B2s
 - **Kubernetes**: v1.33.6
 - **Network Plugin**: kubenet

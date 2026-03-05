@@ -40,7 +40,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime # Stage 2: Runtime
 # Resultado: ~150MB imagen final
 ```
 
-**Registro**: `productapiregistry163505.azurecr.io/productapi:latest`
+**Registro**: `productapiacrmpn.azurecr.io/productapi:latest`
 
 ---
 
@@ -53,11 +53,11 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime # Stage 2: Runtime
 
 **Evidencia**:
 ```
-✅ Cluster: productapi-aks (East US, 1 nodo Standard_B2s)
+✅ Cluster: productapi-aks-mpn (centralus, 1 nodo Standard_B2s)
 ✅ Deployment: 2 replicas running
 ✅ Service: ClusterIP (acceso vía Ingress)
 ✅ HPA: 2-5 replicas, 80% CPU threshold
-✅ Ingress: NGINX LoadBalancer (IP: 20.84.230.209)
+✅ Ingress: NGINX LoadBalancer (IP: 172.168.96.52)
 ```
 
 ---
@@ -119,7 +119,7 @@ helm/
 # .github/workflows/ci-cd.yml
 - Build image: dotnet build -c Release
 - Run tests: dotnet test
-- Push to ACR: docker push productapiregistry163505.azurecr.io/productapi:${{ github.sha }}
+- Push to ACR: docker push productapiacrmpn.azurecr.io/productapi:${{ github.sha }}
 - Update Helm: sed -i "s|tag: .*|tag: ${{ github.sha }}|" helm/values-acr.yaml
 - Git push: git push origin main
 # ArgoCD detecta cambio automáticamente → sincroniza
@@ -196,7 +196,7 @@ kubectl get hpa -n productapi
 
 # Ingress
 kubectl get ingress -n productapi
-# Result: IP 20.84.230.209 ✅
+# Result: IP 172.168.96.52 ✅
 ```
 
 ### ✅ ArgoCD

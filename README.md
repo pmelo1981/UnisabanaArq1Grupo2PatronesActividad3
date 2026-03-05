@@ -20,6 +20,8 @@ API REST para gestión de productos con despliegue automatizado en Kubernetes/AK
 - **Ingress IP:** 172.168.96.52
 - **ArgoCD IP:** 172.169.162.125
 
+---
+
 ## 🚀 Tecnologías
 
 - **.NET 10** - Framework
@@ -28,8 +30,10 @@ API REST para gestión de productos con despliegue automatizado en Kubernetes/AK
 - **Helm 3** - Gestión de configuración
 - **NGINX Ingress Controller** - Enrutamiento HTTP(S)
 - **ArgoCD** - GitOps automático
-- **GitHub Actions** - CI/CD
-- **Azure Container Registry** - Registry de imágenes
+- **GitHub Actions** - CI/CD (Build → Test → Docker Push → Auto-deploy)
+- **Azure Container Registry** - Registry privado de imágenes
+
+---
 
 ## 📡 API REST Endpoints
 

@@ -1,6 +1,6 @@
 ﻿replicaCount: 2
 image:
-  repository: productapiregistry163505.azurecr.io/productapi
+  repository: productapiacrmpn.azurecr.io/productapi
   tag: latest
   pullPolicy: Always
 service:
@@ -24,4 +24,4 @@ env:
     value: Production
 ingress:
   enabled: true
-  host: ""
+  host: "productapi-mpn.centralus.cloudapp.azure.com"

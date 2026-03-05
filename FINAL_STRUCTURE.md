@@ -41,7 +41,7 @@ UnisabanaArq1Grupo2PatronesActividad3/
 ├── helm/                                  ← Kubernetes Helm Chart
 │   ├── Chart.yaml                         (Chart metadata)
 │   ├── values.yaml                        (Default values)
-│   ├── values-acr.yaml                    (ACR-specific, versionado)
+│   ├── values-acr.yaml                    (ACR-specific, versionado - repository updated to productapiacrmpn.azurecr.io)
 │   └── templates/
 │       ├── deployment.yaml                (Kubernetes Deployment)
 │       ├── service.yaml                   (Service - ClusterIP)
@@ -154,10 +154,10 @@ Kubernetes Deployment
   ├─ Pod 2 running
   └─ HPA (2-5 replicas, 80% CPU)
   ↓
-NGINX Ingress (20.84.230.209)
+  NGINX Ingress (172.168.96.52)
   ↓
-API Live
-  http://20.84.230.209/api/products
+  API Live
+  http://productapi-mpn.centralus.cloudapp.azure.com/api/products
 ```
 
 ---
