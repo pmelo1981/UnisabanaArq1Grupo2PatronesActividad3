@@ -1,8 +1,0 @@
-bin/
-obj/
-*.dll
-*.pdb
-.vs/
-.vscode/
-.user
-*.log
